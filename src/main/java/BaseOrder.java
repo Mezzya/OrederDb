@@ -1,41 +1,81 @@
+import com.mysql.jdbc.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 
 /**
  * Created by User on 13.11.2016.
  */
 public class BaseOrder {
-    Connection conn;
+    private Connection conn;
 
 
 
-    public BaseOrder(Connection connection) {
-        conn = connection;
+    public BaseOrder() throws SQLException {
+        conn =  DriverManager.getConnection("jdbc:mysql://10.35.1.248:3306/db_zakaz","root", "root");
+
     }
 
 
-
-    public void addOrder()
+    public void addNewItem(String table)
     {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in);
-        System.out.println("NEW ORDER PREPARE");
-        System.out.println("Enter user id:");
+        System.out.println("Add new Item to :"+table);
+        Statement st = null;
         try {
-            String user_id = br.readLine();
-            System.out.println("Enter product id");
-            String product_id = br.readLine();
-            PreparedStatement st = conn.prepareStatement("INSERT INTO orders user_id, product_id, col VALUE (?,?,?)");
-            st.setInt(1, Integer.parseInt(user_id));
-            st.setString(1,"1");
+            st = conn.createStatement();
+            ResultSet rs = st.executeQuery("SELECT * FROM "+table);
+
+            ResultSetMetaData rsmd = rs.getMetaData();
+
+
+
+            String req = "INSERT INTO "+table+" (";
+            String val = ") VALUE (";
+            for (int i = 2; i <= rsmd.getColumnCount(); i++) {
+
+                req+=rsmd.getColumnName(i);
+                val+="?";
+                if (i<rsmd.getColumnCount())
+                {
+                    req+=", ";
+                    val+=", ";
+                }
+            }
+
+            req+=val+")";
+//            System.out.println(req);
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+            PreparedStatement ps = conn.prepareStatement(req);
+
+
+            for (int i = 2; i <= rsmd.getColumnCount() ; i++) {
+
+                    System.out.println("Enter "+rsmd.getColumnName(i));
+                    String param = br.readLine();
+                    ps.setString(i-1,param);
+
+
+
+            }
+
+            ps.execute();
 
 
 
 
-        } catch (IOException | SQLException e) {
-            e.printStackTrace();
+
+        } catch (SQLException | IOException e) {
+            System.out.println("Чтото пошло не так. Попробуйте еще разок");
         }
+
+
 
     }
 
